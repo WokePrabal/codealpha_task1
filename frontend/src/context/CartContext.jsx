@@ -1,15 +1,7 @@
 // frontend/src/context/CartContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
 
-export const CartContext = createContext({
-  items: [],
-  addToCart: () => {},
-  updateQty: () => {},
-  removeFromCart: () => {},
-  clearCart: () => {},
-  totalPrice: 0
-});
+export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState(() => {
@@ -28,8 +20,6 @@ export const CartProvider = ({ children }) => {
   }, [items]);
 
   const addToCart = (product, qty = 1) => {
-    const quantity = Number(qty) > 0 ? Number(qty) : 1;
-
     const normalized = {
       _id: product._id || product.product || product.id || String(Math.random()),
       name: product.name || product.title || 'Item',
@@ -43,23 +33,18 @@ export const CartProvider = ({ children }) => {
       if (exists) {
         return prev.map(i =>
           i._id === normalized._id
-            ? { ...i, qty: Math.min((i.qty || 0) + quantity, normalized.countInStock || 999) }
+            ? { ...i, qty: Math.min((i.qty || 0) + qty, normalized.countInStock || 999) }
             : i
         );
       }
-      return [...prev, { ...normalized, qty: Math.max(1, quantity) }];
+      return [...prev, { ...normalized, qty: Math.max(1, qty) }];
     });
   };
 
   const updateQty = (id, qty) => {
     const q = Number(qty || 0);
     if (Number.isNaN(q) || q < 1) return;
-    setItems(prev =>
-      prev.map(i => {
-        if (i._id !== id) return i;
-        return { ...i, qty: Math.min(q, i.countInStock || 999) };
-      })
-    );
+    setItems(prev => prev.map(i => (i._id === id ? { ...i, qty: q } : i)));
   };
 
   const removeFromCart = id => {
@@ -86,10 +71,6 @@ export const CartProvider = ({ children }) => {
       {children}
     </CartContext.Provider>
   );
-};
-
-CartProvider.propTypes = {
-  children: PropTypes.node.isRequired
 };
 
 export const useCart = () => useContext(CartContext);
