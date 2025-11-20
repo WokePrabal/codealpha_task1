@@ -1,5 +1,5 @@
 // frontend/src/context/CartContext.jsx
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export const CartContext = createContext();
 
@@ -8,7 +8,7 @@ export const CartProvider = ({ children }) => {
     try {
       const raw = localStorage.getItem('cartItems');
       return raw ? JSON.parse(raw) : [];
-    } catch {
+    } catch (e) {
       return [];
     }
   });
@@ -16,7 +16,7 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     try {
       localStorage.setItem('cartItems', JSON.stringify(items));
-    } catch {}
+    } catch (e) {}
   }, [items]);
 
   const addToCart = (product, qty = 1) => {
@@ -47,26 +47,31 @@ export const CartProvider = ({ children }) => {
     setItems(prev => prev.map(i => (i._id === id ? { ...i, qty: q } : i)));
   };
 
-  const removeFromCart = id => {
+  const removeFromCart = (id) => {
     setItems(prev => prev.filter(i => i._id !== id));
   };
 
   const clearCart = () => setItems([]);
 
-  const totalPrice = useMemo(
-    () =>
-      items.reduce((sum, it) => {
-        const price = Number(it.price || 0);
-        const qty = Number(it.qty || 0);
-        if (Number.isNaN(price) || Number.isNaN(qty)) return sum;
-        return sum + price * qty;
-      }, 0),
-    [items]
-  );
+  const totalPrice = useMemo(() => {
+    return items.reduce((sum, it) => {
+      const price = Number(it.price || 0);
+      const qty = Number(it.qty || 0);
+      if (Number.isNaN(price) || Number.isNaN(qty)) return sum;
+      return sum + price * qty;
+    }, 0);
+  }, [items]);
 
   return (
     <CartContext.Provider
-      value={{ items, addToCart, updateQty, removeFromCart, clearCart, totalPrice }}
+      value={{
+        items,
+        addToCart,
+        updateQty,
+        removeFromCart,
+        clearCart,
+        totalPrice
+      }}
     >
       {children}
     </CartContext.Provider>
